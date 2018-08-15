@@ -20,25 +20,31 @@ def run():
         req = urllib.request.urlopen(url)
         img_name = url.split('=')[1].split('.')[0]
         img_ext = url.split('=')[1].split('.')[1]
+        # img_ext = 'jpg'
         arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
         img = cv2.imdecode(arr, -1)
 
-        # Ks = [2, 8, 32, 64, 256]
-        Ks = [2, 4, 8, 16, 32]
+        # print(img)
 
-        Z = img.reshape((-1, 3))
+        # Ks = [2, 8, 32, 64, 128, 256]
+        Ks = [2, 4, 6, 8, 16, 32, 64]
+        # Ks = [2, 4, 8, 16, 32, 64, 256]
+
+        Z = img.reshape((-1, 1))
 
         # convert to np.float32
         Z = np.float32(Z)
 
         # define criteria, number of clusters(K) and apply kmeans()
-        criteria = (cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1)
 
         for K in Ks:
             start = timeit.default_timer()
 
             ret, label, center = cv2.kmeans(Z, K, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
 
+            print('/////////////')
+            print(K)
             print(ret)
             print(label)
             print(center)
@@ -48,15 +54,17 @@ def run():
             res = center[label.flatten()]
             print('-------------')
             print(res)
-            print('-------------')
             res2 = res.reshape(img.shape)
 
-            print('+++++++++++')
+            print('+++++++++++++')
             print(res2)
-            print('+++++++++++')
 
             # write file
-            cv2.imwrite('D:/ai/src/case_study/image_processing/images/{}-{}.{}'.format(img_name, K, img_ext), res2)
+            cv2.imwrite(
+                'E:/ai/case_study/image_processing/images/{}-{}.{}'.format(img_name, K, img_ext),
+                res2,
+                [cv2.IMWRITE_JPEG_QUALITY, 90]
+            )
 
             # handle return
             rs['results'].append({
@@ -72,9 +80,9 @@ def run():
     except Exception as e:
         rs['results'] = []
         rs['status'] = 0
-        rs['message'] = e.message
+        rs['message'] = str(e)
         return rs
 
 
-# if __name__ == "__main__":
-#     run()
+if __name__ == "__main__":
+    run()
